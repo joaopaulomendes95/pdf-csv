@@ -1,0 +1,7 @@
+{
+  "fatura": "Fatura\\s*(?:/\\s*Invoice)?\\s*(FT\\s+\\d{4}/\\d+)",
+  "cliente_matricula": "Cliente\\s*(?:/\\s*Customer)?\\s*(.*?)(?:Data de Vencimento|Data)",
+  "data_inicio": "Data(?:\\s*de\\s*Vencimento)?\\s*(?:/\\s*Due\\s*date)?(\\d{4})-(\\d{2})-(\\d{2})",
+  "valor": "Total\\s*([\\d,.]+)",
+  "prazo_meses": "(?:[Gg]arantia(?:\\s+\\w+)*?\\s+)?(\\d{1,2})\\s+[Mm]eses"
+}
