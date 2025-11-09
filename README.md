@@ -23,7 +23,7 @@ Before running the application, ensure you have:
 1.  **Clone the repository:**
     ```bash
     git clone https://github.com/joaopaulomendes95/pdf-to-csv.git
-    cd pdf-to-csv
+    cd pdf-csv
     ```
 
 2.  **Install dependencies:**
