@@ -22,7 +22,7 @@ Before running the application, ensure you have:
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/joaopaulomendes95/pdf-to-csv.git
+    git clone https://github.com/joaopaulomendes95/pdf-csv.git
     cd pdf-csv
     ```
 
@@ -33,7 +33,7 @@ Before running the application, ensure you have:
 
 3.  **Build the application:**
     ```bash
-    go build -o pdf-to-csv
+    go build -o pdf-csv
     ```
 
 ## Usage
@@ -44,7 +44,7 @@ Before running the application, ensure you have:
 
 3.  **Run the application**:
     ```bash
-    ./pdf-to-csv [options]
+    ./pdf-csv [options]
     ```
 
     **Command-line Options:**
@@ -54,7 +54,7 @@ Before running the application, ensure you have:
 
     **Example:**
     ```bash
-    ./pdf-to-csv -output my_invoices.csv -workers 16 -template config/invoice_template.json
+    ./pdf-csv -output my_invoices.csv -workers 16 -template config/invoice_template.json
     ```
 
 ## Configuration
@@ -78,7 +78,7 @@ The `template.json` file defines the regular expressions used to extract specifi
 ## Project Structure
 
 ```
-pdf-to-csv/
+pdf-csv/
 ├───.gitignore
 ├───go.mod
 ├───go.sum
