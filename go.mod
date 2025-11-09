@@ -1,4 +1,4 @@
-module pdf-to-xlsx
+module pdf-csv
 
 go 1.25.4
 
