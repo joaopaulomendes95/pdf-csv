@@ -9,6 +9,9 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
+	"strconv"
+	"strings"
 	"sync"
 	"flag"
 	"sync/atomic"
@@ -96,11 +99,38 @@ func main() {
 	wg.Wait()
 	close(results)
 
-	// Start CSV writer goroutine
-	doneWriting := make(chan bool)
-	go WriteInvoicesToCSV(cfg.OutputFileName, results, doneWriting)
+	// Collect all invoices from the results channel
+	var invoices []Invoice
+	for invoice := range results {
+		invoices = append(invoices, invoice)
+	}
 
-	<-doneWriting // Wait for the writer to finish
+	// Sort invoices by Fatura number
+	sort.Slice(invoices, func(i, j int) bool {
+		faturaI := invoices[i].Fatura
+		faturaJ := invoices[j].Fatura
+
+		partsI := strings.Split(faturaI, "/")
+		partsJ := strings.Split(faturaJ, "/")
+
+		if len(partsI) < 2 || len(partsJ) < 2 {
+			return faturaI < faturaJ // Fallback to string comparison
+		}
+
+		numI, errI := strconv.Atoi(strings.TrimSpace(partsI[1]))
+		numJ, errJ := strconv.Atoi(strings.TrimSpace(partsJ[1]))
+
+		if errI != nil || errJ != nil {
+			return faturaI < faturaJ // Fallback to string comparison
+		}
+
+		return numI < numJ
+	})
+
+	// Write sorted invoices to CSV
+	if err := WriteInvoicesToCSV(cfg.OutputFileName, invoices); err != nil {
+		log.Fatalf("Failed to write invoices to CSV: %v", err)
+	}
 
 	log.Printf("Processing complete. Processed %d PDFs with %d errors in %s", atomic.LoadUint64(&totalProcessed), atomic.LoadUint64(&totalErrors), time.Since(startTime))
 }
@@ -160,14 +190,13 @@ func parseInvoice(text string, regexCfg RegexConfig) Invoice {
 
 	match = reDataInicio.FindStringSubmatch(text)
 	if len(match) > 3 {
-		invoice.DataInicio = fmt.Sprintf("%s/%s/%s", match[2], match[3], match[1])
+		invoice.DataInicio = fmt.Sprintf("%s-%s-%s", match[3], match[2], match[1])
 	}
 
 	match = reValor.FindStringSubmatch(text)
 	if len(match) > 1 {
 		cleanedValor := match[1]
 		cleanedValor = reValorCleanerDot.ReplaceAllString(cleanedValor, "")
-		cleanedValor = reValorCleanerComma.ReplaceAllString(cleanedValor, ".")
 		invoice.Valor = cleanedValor
 	}
 
@@ -195,10 +224,10 @@ func readPdf(path string) (string, error) {
 }
 
 // WriteInvoicesToCSV writes a slice of Invoice structs to a CSV file.
-func WriteInvoicesToCSV(filename string, results <-chan Invoice, done chan<- bool) {
+func WriteInvoicesToCSV(filename string, invoices []Invoice) error {
 	file, err := os.Create(filename)
 	if err != nil {
-		log.Fatalf("Failed to create CSV file %s: %v", filename, err)
+		return fmt.Errorf("failed to create CSV file %s: %w", filename, err)
 	}
 	defer file.Close()
 
@@ -207,11 +236,11 @@ func WriteInvoicesToCSV(filename string, results <-chan Invoice, done chan<- boo
 
 	// Write header
 	if err := writer.Write([]string{"Fatura", "Cliente/Matricula", "Data Inicio", "Valor", "Prazo Meses"}); err != nil {
-		log.Fatalf("Failed to write CSV header: %v", err)
+		return fmt.Errorf("failed to write CSV header: %w", err)
 	}
 
 	// Write invoice data
-	for invoice := range results {
+	for _, invoice := range invoices {
 		record := []string{
 			invoice.Fatura,
 			invoice.ClienteMatricula,
@@ -220,10 +249,10 @@ func WriteInvoicesToCSV(filename string, results <-chan Invoice, done chan<- boo
 			invoice.PrazoMeses,
 		}
 		if err := writer.Write(record); err != nil {
-			log.Fatalf("Failed to write CSV record: %v", err)
+			return fmt.Errorf("failed to write CSV record: %w", err)
 		}
 	}
 
 	log.Printf("Successfully wrote invoices to %s", filename)
-	done <- true
+	return nil
 }
