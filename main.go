@@ -45,9 +45,7 @@ type Invoice struct {
 }
 
 // Global compiled regex patterns for valor cleaning
-var (
-	reValorCleanerDot = regexp.MustCompile(`\.`)
-)
+var ()
 
 func main() {
 	startTime := time.Now()
@@ -195,7 +193,7 @@ func parseInvoice(text string, regexCfg RegexConfig) Invoice {
 	match = reValor.FindStringSubmatch(text)
 	if len(match) > 1 {
 		cleanedValor := match[1]
-		cleanedValor = reValorCleanerDot.ReplaceAllString(cleanedValor, "")
+		cleanedValor = strings.ReplaceAll(cleanedValor, ".", ",")
 		invoice.Valor = cleanedValor
 	}
 
