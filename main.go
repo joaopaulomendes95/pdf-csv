@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/csv"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -13,7 +14,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"flag"
 	"sync/atomic"
 	"time"
 
@@ -29,11 +29,11 @@ type Config struct {
 
 // RegexConfig holds the regex patterns loaded from the JSON file.
 type RegexConfig struct {
-	Fatura          string `json:"fatura"`
+	Fatura           string `json:"fatura"`
 	ClienteMatricula string `json:"cliente_matricula"`
-	DataInicio      string `json:"data_inicio"`
-	Valor           string `json:"valor"`
-	PrazoMeses      string `json:"prazo_meses"`
+	DataInicio       string `json:"data_inicio"`
+	Valor            string `json:"valor"`
+	PrazoMeses       string `json:"prazo_meses"`
 }
 
 type Invoice struct {
@@ -46,8 +46,7 @@ type Invoice struct {
 
 // Global compiled regex patterns for valor cleaning
 var (
-	reValorCleanerDot   = regexp.MustCompile(`\.`)
-	reValorCleanerComma = regexp.MustCompile(`,`)
+	reValorCleanerDot = regexp.MustCompile(`\.`)
 )
 
 func main() {
@@ -202,7 +201,11 @@ func parseInvoice(text string, regexCfg RegexConfig) Invoice {
 
 	match = rePrazoMeses.FindStringSubmatch(text)
 	if len(match) > 1 {
-		invoice.PrazoMeses = match[1]
+		if len(match) > 2 && match[2] != "" {
+			invoice.PrazoMeses = match[2]
+		} else {
+			invoice.PrazoMeses = match[1]
+		}
 	}
 
 	return invoice
